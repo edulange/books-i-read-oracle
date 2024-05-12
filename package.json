@@ -9,6 +9,10 @@
   "author": "Eduardo Lange",
   "license": "ISC",
   "dependencies": {
-    "nodemon": "^3.1.0"
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nodemon": "^3.1.0",
+    "oracledb": "^6.5.0"
   }
 }
