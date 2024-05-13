@@ -3,7 +3,7 @@ const router = express.Router()
 const { getConnection, oracledb } = require('../database/oracleConnection')
 const { existsOrError } = require('./validations')
 
-router.get('/teste', async (req, res) => {
+router.get('/usuarios', async (req, res) => {
 	let conn
 
 	try {
