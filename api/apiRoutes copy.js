@@ -5,23 +5,23 @@ const { existsOrError } = require('./validations')
 
 //como vou transformar isso para o meu db?
 
-router.get('/teste', async (req, res) => {
+router.get('/usuarios', async (req, res) => {
 	let conn
 
 	try {
 		conn = await getConnection()
 
-		const select = `SELECT * FROM USUARIOS`;
+		const select = `select p.id,
+                        p.nome,
+                        p.telefone,
+                        p.email,
+                        TO_CHAR(p.data_nascimento, 'DD/MM/YYYY') data_nascimento,
+                        TO_CHAR(p.data_cadastro, 'DD/MM/YYYY HH24:MI:SS') data_cadastro
+                    from pessoa p
+                    order by data_cadastro desc`
 
-	
-                    // from pessoa p
-                    // order by data_cadastro desc
+		const result = await conn.execute(select, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }) //me retorna em formato de objeto
 
-		
-					const result = await conn.execute(select, [], { outFormat: oracledb.OUT_FORMAT_OBJECT });
-
-					console.log('Query result:', result); // Adicione esta linha para ver o resultado da consulta
-			
 		res.status(200).json(result.rows) //pegando a resposta e enviando para o frontend
 	} catch (err) {
 		console.error(err)
@@ -32,7 +32,7 @@ router.get('/teste', async (req, res) => {
 		}
 	}
 })
-/*
+
 router.post('/usuarios', async (req, res) => {
 	const { nome, telefone, email, dataNascimento } = req.body
 
@@ -140,6 +140,6 @@ router.delete('/usuarios/:id', async (req, res) => {
 			await conn.close()
 		}
 	}
-}) */
+})
 
 module.exports = router
