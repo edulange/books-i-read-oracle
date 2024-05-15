@@ -1,39 +1,36 @@
-const express = require('express')
-const router = express.Router()
-const { getConnection, oracledb } = require('../database/oracleConnection')
-const { existsOrError } = require('./validations')
+const express = require('express');
+const router = express.Router();
+const { getConnection, oracledb } = require('../database/oracleConnection');
+const { existsOrError } = require('./validations');
 
-//como vou transformar isso para o meu db?
+router.get('/usuarios', async (req, res) => {
+    let conn;
 
-router.get('/teste', async (req, res) => {
-	let conn
+    try {
+        conn = await getConnection();
 
-	try {
-		conn = await getConnection()
+        const select = `SELECT * FROM USUARIOS`;
 
-		const select = `SELECT * FROM USUARIOS`;
+        const result = await conn.execute(select, [], { outFormat: oracledb.OUT_FORMAT_OBJECT });
 
-	
-                    // from pessoa p
-                    // order by data_cadastro desc
+        // Adicione essas linhas para ajudar na depuração
+        console.log('Query result rows:', result.rows);
 
-		
-					const result = await conn.execute(select, [], { outFormat: oracledb.OUT_FORMAT_OBJECT });
+        res.status(200).json(result.rows); // Pegando a resposta e enviando para o frontend
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (conn) {
+            await conn.close();
+        }
+    }
+});
 
-					console.log('Query result:', result); // Adicione esta linha para ver o resultado da consulta
-			
-		res.status(200).json(result.rows) //pegando a resposta e enviando para o frontend
-	} catch (err) {
-		console.error(err)
-		res.status(500).json({ error: err.message })
-	} finally {
-		if (conn) {
-			await conn.close()
-		}
-	}
-})
+module.exports = router;
+
 /*
-router.post('/usuarios', async (req, res) => {
+router.post('/usuariosadd', async (req, res) => {
 	const { nome, telefone, email, dataNascimento } = req.body
 
 	try {
@@ -72,7 +69,7 @@ router.post('/usuarios', async (req, res) => {
 		}
 	}
 })
-
+/*
 router.put('/usuarios/:id', async (req, res) => {
 	//tem q passar via paratro o ID
 	const id = req.params.id // eu quero o ID que está nos parametros da minha requisição
@@ -141,5 +138,3 @@ router.delete('/usuarios/:id', async (req, res) => {
 		}
 	}
 }) */
-
-module.exports = router
