@@ -27,8 +27,6 @@ router.get('/usuarios', async (req, res) => {
 	}
 })
 
-hoje não deu de novo? qual a minha prioridade?
-
 router.post('/usuariosadd', async (req, res) => {
 	const { name, password } = req.body
 
