@@ -40,14 +40,31 @@ router.post('/books', async (req, res) => {
 
     let connection
     try {
-        connection = await getConnection()
+        connection = await getConnection();
+    
         const result = await connection.execute(
-            `INSERT INTO BOOKS (title, author, pages, thumbnail) VALUES (:title, :author, :pages, :thumbnail)`,
-            {title, author, pages, thumbnail},
-            { autoCommit: true}
-        )
-        if (result.rowsAffected) res.status(201).send('Registro criado com sucesso')
-
+          `INSERT INTO books (TITLE, AUTHOR, PAGES, THUMBNAIL) VALUES (:title, :author, :pages, :thumbnail) RETURNING ID INTO :id`,
+          {
+            title,
+            author,
+            pages,
+            thumbnail,
+            id: { type: oracledb.NUMBER, dir: oracledb.BIND_OUT }
+          }
+        );
+    
+        await connection.commit();
+    
+        // Retorne o livro recém-adicionado com o ID gerado
+        const newBook = {
+          ID: result.outBinds.id[0],
+          TITLE: title,
+          AUTHOR: author,
+          PAGES: pages,
+          THUMBNAIL: thumbnail
+        };
+    
+        res.status(201).json(newBook);
     } catch (err) {
 		console.error(err)
 		res.status(500).json({ error: err.message })
