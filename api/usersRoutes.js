@@ -4,14 +4,14 @@ const { getConnection, oracledb } = require('../database/oracleConnection')
 const { existsOrError } = require('./validations')
 
 router.get('/usuarios', async (req, res) => {
-	let conn
+	let connection
 
 	try {
-		conn = await getConnection()
+		connection = await getConnection()
 
 		const select = `SELECT * FROM USUARIOS`
 
-		const result = await conn.execute(select, [], { outFormat: oracledb.OUT_FORMAT_OBJECT })
+		const result = await connection.execute(select, [], { outFormat: oracledb.OUT_FORMAT_OBJECT })
 
 		// Adicione essas linhas para ajudar na depuração
 		console.log('Query result rows:', result.rows)
@@ -21,8 +21,8 @@ router.get('/usuarios', async (req, res) => {
 		console.error(err)
 		res.status(500).json({ error: err.message })
 	} finally {
-		if (conn) {
-			await conn.close()
+		if (connection) {
+			await connection.close()
 		}
 	}
 })

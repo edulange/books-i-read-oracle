@@ -8,6 +8,7 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 app.use('/api', usersRoutes)
+app.use('/api', booksRoutes)
 
 app.listen(3001, () => {
     console.log('serviço rodando na porta 3001')
