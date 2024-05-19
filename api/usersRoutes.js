@@ -27,7 +27,7 @@ router.get('/usuarios', async (req, res) => {
 	}
 })
 
-router.post('/usuariosadd', async (req, res) => {
+router.post('/usuarios', async (req, res) => {
 	const { name, password } = req.body
 
 	try {
@@ -37,19 +37,19 @@ router.post('/usuariosadd', async (req, res) => {
 		return res.status(400).send(msg) //aqui eu estarei enviando a mensagem para o usuario na tela.
 	}
 
-	let conn
+	let connection
 
 	try {
-		conn = await getConnection()
+		connection = await getConnection()
 
-		const result = await conn.execute(
+		const result = await connection.execute(
 			'INSERT INTO USUARIOS (name, password) values (:1, :2)', //comando para o banco de dados
 			[name, password]
 		)
 
 		if (result.rowsAffected) {
 			//se o conn der certo, ele vai adicionar uma linha, logo
-			await conn.commit() //eu quero commitar no oracle isso.
+			await connection.commit() //eu quero commitar no oracle isso.
 
 			res.status(201).send('Registro criado com sucesso')
 		}
@@ -58,8 +58,8 @@ router.post('/usuariosadd', async (req, res) => {
 		res.status(500).json(error) //enviar para o usuario o erro
 	} finally {
 		//para finalizar então
-		if (conn) {
-			await conn.close() //fechar a conexão com o oracle
+		if (connection) {
+			await connection.close() //fechar a conexão com o oracle
 		}
 	}
 })
@@ -77,12 +77,12 @@ router.put('/usuarios/:id', async (req, res) => {
 		return res.status(400).send(msg)
 	}
 
-	let conn
+	let connection
 
 	try {
-		conn = await getConnection() //inicia a coneção
+		connection = await getConnection() //inicia a coneção
 
-		const result = await conn.execute(
+		const result = await connection.execute(
 			//executando um update no meu banco de dados
 			`UPDATE usuarios SET name = :1, password = :2
              WHERE id = :3`,
@@ -93,15 +93,15 @@ router.put('/usuarios/:id', async (req, res) => {
 			//verificando se alguma linha foi afetada
 			res.status(404).json({ message: 'Registro não encontrado' })
 		} else {
-			await conn.commit() //comitar
+			await connection.commit() //comitar
 			res.status(200).json({ message: 'Registro atualizado com sucesso' }) //devolvendo a resposta para o frontend
 		}
 	} catch (err) {
 		console.error(err)
 		res.status(500).json({ error: err.message })
 	} finally {
-		if (conn) {
-			await conn.close()
+		if (connection) {
+			await connection.close()
 		}
 	}
 })
@@ -110,25 +110,25 @@ router.put('/usuarios/:id', async (req, res) => {
 router.delete('/usuarios/:id', async (req, res) => {
 	const id = req.params.id //pegar o id na requisição
 
-	let conn
+	let connection
 
 	try {
-		conn = await getConnection() //cria a conexão com o bacno de dados
+		connection = await getConnection() //cria a conexão com o bacno de dados
 
-		const result = await conn.execute(`DELETE FROM usuarios WHERE id = :1`, [id])
+		const result = await connection.execute(`DELETE FROM usuarios WHERE id = :1`, [id])
 
 		if (result.rowsAffected === 0) { // se tiver alguma que naõ foi afetada
 			res.status(404).send('Registro não encontrado') //então registro não encontrado
 		} else {
-			await conn.commit() // faço o commit no db
+			await connection.commit() // faço o commit no db
 			res.status(200).send('Registro removido com sucesso') //envio a resposta para o frontend
 		}
 	} catch (err) {
 		console.error(err)
 		res.status(500).json({ error: err.message })
 	} finally {
-		if (conn) {
-			await conn.close()
+		if (connection) {
+			await connection.close()
 		}
 	}
 }) 
