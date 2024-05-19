@@ -1,4 +1,6 @@
 const express = require('express')
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken');
 const cors = require('cors')
 const usersRoutes = require('./api/usersRoutes')
 const booksRoutes = require('./api/booksRoutes')

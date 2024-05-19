@@ -2,8 +2,8 @@ const oracledb = require('oracledb')
 require('dotenv').config()
 
 const config = {
-    user: process.env.USER, //FIRSTAPP
-    password: process.env.PASSWORD, //FIRSTAPP
+    user: process.env.USER, //BOOKSIREAD
+    password: process.env.PASSWORD, //BOOKSIREAD
     connectString: process.env.DATABSE_URL, //localhost:1521/XEPDB1
 }
 

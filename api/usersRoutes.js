@@ -1,31 +1,34 @@
 const express = require('express')
 const router = express.Router()
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 const { getConnection, oracledb } = require('../database/oracleConnection')
 const { existsOrError } = require('./validations')
+const authMiddleware = require('../middleware/authMiddleware')
 
-router.get('/usuarios', async (req, res) => {
-	let connection
+router.get('/usuarios', authMiddleware, async (req, res) => {
+    let connection;
 
-	try {
-		connection = await getConnection()
+    try {
+        connection = await getConnection();
 
-		const select = `SELECT * FROM USUARIOS`
+        console.log('User ID from token:', req.userId);
 
-		const result = await connection.execute(select, [], { outFormat: oracledb.OUT_FORMAT_OBJECT })
+        const select = `SELECT * FROM USUARIOS WHERE id = :id`;
+        const result = await connection.execute(select, [req.userId], { outFormat: oracledb.OUT_FORMAT_OBJECT });
 
-		// Adicione essas linhas para ajudar na depuração
-		console.log('Query result rows:', result.rows)
+        console.log('Query result rows:', result.rows);
 
-		res.status(200).json(result.rows) // Pegando a resposta e enviando para o frontend
-	} catch (err) {
-		console.error(err)
-		res.status(500).json({ error: err.message })
-	} finally {
-		if (connection) {
-			await connection.close()
-		}
-	}
-})
+        res.status(200).json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (connection) {
+            await connection.close();
+        }
+    }
+});
 
 router.post('/usuarios', async (req, res) => {
 	const { name, password } = req.body
@@ -63,7 +66,6 @@ router.post('/usuarios', async (req, res) => {
 		}
 	}
 })
-
 
 router.put('/usuarios/:id', async (req, res) => {
 	//tem q passar via paratro o ID
@@ -106,7 +108,6 @@ router.put('/usuarios/:id', async (req, res) => {
 	}
 })
 
-
 router.delete('/usuarios/:id', async (req, res) => {
 	const id = req.params.id //pegar o id na requisição
 
@@ -117,7 +118,8 @@ router.delete('/usuarios/:id', async (req, res) => {
 
 		const result = await connection.execute(`DELETE FROM usuarios WHERE id = :1`, [id])
 
-		if (result.rowsAffected === 0) { // se tiver alguma que naõ foi afetada
+		if (result.rowsAffected === 0) {
+			// se tiver alguma que naõ foi afetada
 			res.status(404).send('Registro não encontrado') //então registro não encontrado
 		} else {
 			await connection.commit() // faço o commit no db
@@ -131,7 +133,77 @@ router.delete('/usuarios/:id', async (req, res) => {
 			await connection.close()
 		}
 	}
-}) 
+})
 
+// Endpoint de registro
+router.post('/register', async (req, res) => {
+	const { name, password } = req.body
+
+	try {
+		existsOrError(name, 'O nome não foi informado')
+		existsOrError(password, 'O password não foi informado')
+	} catch (msg) {
+		return res.status(400).send(msg)
+	}
+
+	let connection
+	try {
+		connection = await getConnection() //cria a conexão com o bacno de dados
+		const hashedPassword = await bcrypt.hash(password, 10)
+
+		const result = await connection.execute(
+			`INSERT INTO USUARIOS (name, password) VALUES (:name, :password)`,
+			{ name, password: hashedPassword },
+			{ autoCommit: true }
+		)
+
+		res.status(201).json({ message: 'Usuário registrado com sucesso!' })
+	} catch (error) {
+		res.status(500).json({ message: 'Erro ao registrar usuário.', error })
+	} finally {
+		if (connection) {
+			await connection.close()
+		}
+	}
+})
+
+// Endpoint de login
+router.post('/login', async (req, res) => {
+	const { name, password } = req.body
+
+	let connection
+	try {
+		connection = await getConnection()
+
+		const result = await connection.execute(
+			`SELECT * FROM USUARIOS WHERE name = :name`,
+			[name],
+			{ outFormat: oracledb.OUT_FORMAT_OBJECT } // isso garante que ele vai retornar um objeto.
+		)
+
+		const user = result.rows[0]
+
+		console.log('Resultado da consulta:', user)
+
+		if (!user) {
+			return res.status(400).json({ message: 'Credenciais inválidas' })
+		}
+
+		const isPasswordValid = await bcrypt.compare(password, user.PASSWORD) // Acessando a propriedade PASSWORD
+		if (!isPasswordValid) {
+			return res.status(401).json({ message: 'Password inválido' })
+		}
+
+		const token = jwt.sign({ id: user.ID }, process.env.SECRET_KEY, { expiresIn: '1h' }) // Acessando a propriedade ID
+		res.status(200).json({ token })
+	} catch (error) {
+		console.error('Erro no login:', error)
+		res.status(500).json({ message: 'Erro ao fazer login.', error })
+	} finally {
+		if (connection) {
+			await connection.close()
+		}
+	}
+})
 
 module.exports = router
