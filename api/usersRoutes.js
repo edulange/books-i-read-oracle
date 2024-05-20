@@ -135,7 +135,6 @@ router.delete('/usuarios/:id', async (req, res) => {
 	}
 })
 
-// Endpoint de registro
 router.post('/register', async (req, res) => {
 	const { name, password } = req.body
 
@@ -151,7 +150,7 @@ router.post('/register', async (req, res) => {
 		connection = await getConnection() //cria a conexão com o bacno de dados
 		const hashedPassword = await bcrypt.hash(password, 10)
 
-		const result = await connection.execute(
+		await connection.execute(
 			`INSERT INTO USUARIOS (name, password) VALUES (:name, :password)`,
 			{ name, password: hashedPassword },
 			{ autoCommit: true }
