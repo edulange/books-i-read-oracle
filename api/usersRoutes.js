@@ -169,41 +169,45 @@ router.post('/register', async (req, res) => {
 
 // Endpoint de login
 router.post('/login', async (req, res) => {
-	const { name, password } = req.body
+	const { name, password } = req.body;
 
-	let connection
+	let connection;
 	try {
-		connection = await getConnection()
+		connection = await getConnection();
 
 		const result = await connection.execute(
 			`SELECT * FROM USUARIOS WHERE name = :name`,
 			[name],
-			{ outFormat: oracledb.OUT_FORMAT_OBJECT } // isso garante que ele vai retornar um objeto.
-		)
+			{ outFormat: oracledb.OUT_FORMAT_OBJECT } // Isso garante que ele vai retornar um objeto.
+		);
 
-		const user = result.rows[0]
+		const user = result.rows[0];
 
-		console.log('Resultado da consulta:', user)
+		console.log('Resultado da consulta:', user);
+		console.log(user)
 
 		if (!user) {
-			return res.status(400).json({ message: 'Credenciais inválidas' })
+			return res.status(400).json({ message: 'Credenciais inválidas' });
 		}
 
-		const isPasswordValid = await bcrypt.compare(password, user.PASSWORD) // Acessando a propriedade PASSWORD
+		console.log('Senha fornecida:', password);
+		console.log('Senha hash no banco de dados:', user.PASSWORD);
+
+		const isPasswordValid = await bcrypt.compare(password, user.PASSWORD); // Acessando a propriedade PASSWORD
 		if (!isPasswordValid) {
-			return res.status(401).json({ message: 'Password inválido' })
+			return res.status(401).json({ message: 'Password inválido' });
 		}
 
-		const token = jwt.sign({ id: user.ID }, process.env.SECRET_KEY, { expiresIn: '1h' }) // Acessando a propriedade ID
-		res.status(200).json({ token })
+		const token = jwt.sign({ id: user.ID }, process.env.SECRET_KEY, { expiresIn: '1h' }); // Acessando a propriedade ID
+		res.status(200).json({ token });
 	} catch (error) {
-		console.error('Erro no login:', error)
-		res.status(500).json({ message: 'Erro ao fazer login.', error })
+		console.error('Erro no login:', error);
+		res.status(500).json({ message: 'Erro ao fazer login.', error });
 	} finally {
 		if (connection) {
-			await connection.close()
+			await connection.close();
 		}
 	}
-})
+});
 
 module.exports = router
